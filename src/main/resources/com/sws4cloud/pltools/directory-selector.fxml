@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns="http://javafx.com/javafx/11.0.14-internal" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.sws4cloud.pltools.DirectorySelectorController">
+    <children>
+        <GridPane hgap="10.0" vgap="15.0">
+            <columnConstraints>
+                <ColumnConstraints halignment="RIGHT" hgrow="NEVER" minWidth="100.0"/>
+                <ColumnConstraints hgrow="ALWAYS" minWidth="200.0"/>
+                <ColumnConstraints hgrow="NEVER" minWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+            </rowConstraints>
+            <children>
+                <!-- 模板文件行移动到最上面 -->
+                <Label fx:id="templateFileLabel" text="模板文件:" GridPane.rowIndex="0" />
+                <TextField fx:id="templateFileField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                <Button fx:id="chooseTemplateButton" mnemonicParsing="false" onAction="#onChooseTemplateButtonClick" text="浏览..." GridPane.columnIndex="2" GridPane.rowIndex="0" />
+
+                <!-- 源文件目录行 -->
+                <Label fx:id="sourceDirLabel" text="源文件目录:" GridPane.rowIndex="1"/>
+                <TextField fx:id="sourceDirectoryField" editable="false" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Button fx:id="chooseSourceButton" mnemonicParsing="false" onAction="#onChooseSourceButtonClick"
+                        text="浏览..." GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+
+                <!-- 结果存储目录行 -->
+                <Label fx:id="targetDirLabel" text="结果存储目录:" GridPane.rowIndex="2"/>
+                <TextField fx:id="targetDirectoryField" editable="false" GridPane.columnIndex="1"
+                           GridPane.rowIndex="2"/>
+                <Button fx:id="chooseTargetButton" mnemonicParsing="false" onAction="#onChooseTargetButtonClick"
+                        text="浏览..." GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+            </children>
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+            </padding>
+        </GridPane>
+
+        <Label fx:id="statusLabel" text="请选择目录" textFill="#2c7e2f">
+            <VBox.margin>
+                <Insets left="20.0"/>
+            </VBox.margin>
+        </Label>
+
+        <!-- 执行按钮居中 -->
+        <HBox alignment="CENTER">
+            <children>
+                <Button fx:id="executeButton" mnemonicParsing="false" onAction="#onExecuteButtonClick" text="执行">
+                    <HBox.margin>
+                        <Insets top="10.0" bottom="10.0"/>
+                    </HBox.margin>
+                </Button>
+            </children>
+        </HBox>
+
+        <!-- 日志标题行，包含语言切换按钮 -->
+        <HBox alignment="CENTER_LEFT">
+            <children>
+                <Label fx:id="logLabel" text="执行日志:">
+                    <HBox.margin>
+                        <Insets left="20.0" />
+                    </HBox.margin>
+                </Label>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="languageToggleButton" mnemonicParsing="false" onAction="#onLanguageToggleClick" text="English">
+                    <HBox.margin>
+                        <Insets right="40.0" />
+                    </HBox.margin>
+                </Button>
+            </children>
+            <VBox.margin>
+                <Insets top="10.0" />
+            </VBox.margin>
+        </HBox>
+
+        <!-- 日志显示区域和清除按钮 -->
+        <AnchorPane>
+            <TextArea fx:id="logTextArea" prefHeight="200.0" wrapText="true" AnchorPane.topAnchor="0.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.bottomAnchor="0.0"/>
+            <Button fx:id="clearLogButton" text="清除日志" onAction="#onClearLogButtonClick"
+                    AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="30.0"
+                    style="-fx-background-color: #f0f0f0; -fx-border-color: #ccc;">
+            </Button>
+            <VBox.margin>
+                <Insets left="20.0" right="20.0" top="5.0" bottom="20.0"/>
+            </VBox.margin>
+        </AnchorPane>
+
+    </children>
+</VBox>
