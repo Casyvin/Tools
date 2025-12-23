@@ -131,46 +131,45 @@
                 </configuration>
             </plugin>
 
-            <!-- 添加 maven-shade-plugin 创建包含依赖的JAR -->
+            <!-- 修复后的 maven-dependency-plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.5.0</version>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
+                        <id>copy-dependencies</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>shade</goal>
+                            <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.sws4cloud.pltools.PLToolsApplication</mainClass>
-                                </transformer>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>module-info.class</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                            <includeScope>runtime</includeScope>
+                            <!-- 排除JavaFX，因为我们会单独下载 -->
+                            <excludeArtifactIds>javafx-controls,javafx-fxml,javafx-web,javafx-swing,javafx-media</excludeArtifactIds>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 可选：jdeps插件用于检查模块 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jdeps-plugin</artifactId>
+                <version>3.1.2</version>
+                <executions>
+                    <execution>
+                        <id>check-modules</id>
+                        <goals>
+                            <goal>jdkinternals</goal>
+                        </goals>
+                        <configuration>
+                            <multiRelease>17</multiRelease>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
-
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-                <includes>
-                    <include>**/*.fxml</include>
-                    <include>**/*.xlsx</include>
-                </includes>
-            </resource>
-        </resources>
     </build>
 </project>

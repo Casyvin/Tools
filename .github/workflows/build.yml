@@ -10,10 +10,10 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'zulu'
@@ -27,24 +27,40 @@ jobs:
           echo "JAVAFX_HOME=$pwd\javafx\javafx-sdk-$javafxVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build with Maven
-        run: mvn clean package
-
-      - name: Copy Dependencies
         run: |
-          mvn dependency:copy-dependencies -DoutputDirectory=target/deps -DincludeScope=runtime
+          mvn clean compile
+          mvn package
+
+      - name: Debug - List generated files
+        run: |
+          echo "=== Listing target directory ==="
+          Get-ChildItem -Path target -Recurse -Name
+          echo "=== Listing modules directory ==="
+          if (Test-Path target/modules) {
+            Get-ChildItem -Path target/modules -Name
+          }
 
       - name: Create Windows Package
         run: |
-          jpackage --input target/ `
-                   --name PL-TOOLS `
+          # 检查主JAR是否包含模块信息
+          echo "=== Checking module info ==="
+          jar --file=target/PL-TOOLS-1.0-SNAPSHOT.jar --describe-module
+          
+          # 构建模块路径
+          $modulePath = "$env:JAVAFX_HOME\jmods;target\PL-TOOLS-1.0-SNAPSHOT.jar"
+          if (Test-Path target/modules) {
+            $modulePath = "$modulePath;target\modules\*.jar"
+          }
+          echo "Module path: $modulePath"
+          
+          jpackage --name PL-TOOLS `
                    --app-version 1.0 `
-                   --main-class com.sws4cloud.pltools.PLToolsApplication `
-                   --main-jar PL-TOOLS-1.0-SNAPSHOT.jar `
-                   --module-path "$env:JAVAFX_HOME\jmods;target\PL-TOOLS-1.0-SNAPSHOT.jar;target\deps" `
-                   --add-modules com.sws4cloud.pltools `
+                   --module-path $modulePath `
+                   --module com.sws4cloud.pltools/com.sws4cloud.pltools.PLToolsApplication `
                    --type exe `
-                   --dest release
-          Get-ChildItem -Path release -Recurse -Name "*.exe"
+                   --dest release `
+                   --win-menu `
+                   --win-shortcut
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
@@ -55,10 +71,10 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'zulu'
@@ -71,24 +87,38 @@ jobs:
           echo "JAVAFX_HOME=$(pwd)/javafx-sdk-$javafxVersion" >> $GITHUB_ENV
 
       - name: Build with Maven
-        run: mvn clean package
-
-      - name: Copy Dependencies
         run: |
-          mvn dependency:copy-dependencies -DoutputDirectory=target/deps -DincludeScope=runtime
+          mvn clean compile
+          mvn package
+
+      - name: Debug - List generated files
+        run: |
+          echo "=== Listing target directory ==="
+          find target -type f -name "*.jar" | head -20
+          echo "=== Listing modules directory ==="
+          if [ -d "target/modules" ]; then
+            ls -la target/modules/
+          fi
 
       - name: Create macOS Package
         run: |
-          jpackage --input target/ \
-                   --name PL-TOOLS \
+          # 检查主JAR是否包含模块信息
+          echo "=== Checking module info ==="
+          jar --file=target/PL-TOOLS-1.0-SNAPSHOT.jar --describe-module
+          
+          # 构建模块路径
+          modulePath="$JAVAFX_HOME/jmods:target/PL-TOOLS-1.0-SNAPSHOT.jar"
+          if [ -d "target/modules" ]; then
+            modulePath="$modulePath:target/modules/*"
+          fi
+          echo "Module path: $modulePath"
+          
+          jpackage --name PL-TOOLS \
                    --app-version 1.0 \
-                   --main-class com.sws4cloud.pltools.PLToolsApplication \
-                   --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
-                   --module-path "$JAVAFX_HOME/jmods:target/PL-TOOLS-1.0-SNAPSHOT.jar:target/deps" \
-                   --add-modules com.sws4cloud.pltools \
+                   --module-path "$modulePath" \
+                   --module com.sws4cloud.pltools/com.sws4cloud.pltools.PLToolsApplication \
                    --type dmg \
                    --dest release
-          ls -la release
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
