@@ -29,6 +29,10 @@ jobs:
       - name: Build with Maven
         run: mvn clean package
 
+      - name: Copy Dependencies
+        run: |
+          mvn dependency:copy-dependencies -DoutputDirectory=target/deps -DincludeScope=runtime
+
       - name: Create Windows Package
         run: |
           jpackage --input target/ `
@@ -36,8 +40,8 @@ jobs:
                    --app-version 1.0 `
                    --main-class com.sws4cloud.pltools.PLToolsApplication `
                    --main-jar PL-TOOLS-1.0-SNAPSHOT.jar `
-                   --module-path "$env:JAVAFX_HOME\jmods;target\PL-TOOLS-1.0-SNAPSHOT.jar" `
-                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media `
+                   --module-path "$env:JAVAFX_HOME\jmods;target\PL-TOOLS-1.0-SNAPSHOT.jar;target\deps" `
+                   --add-modules com.sws4cloud.pltools `
                    --type exe `
                    --dest release
           Get-ChildItem -Path release -Recurse -Name "*.exe"
@@ -69,6 +73,10 @@ jobs:
       - name: Build with Maven
         run: mvn clean package
 
+      - name: Copy Dependencies
+        run: |
+          mvn dependency:copy-dependencies -DoutputDirectory=target/deps -DincludeScope=runtime
+
       - name: Create macOS Package
         run: |
           jpackage --input target/ \
@@ -76,8 +84,8 @@ jobs:
                    --app-version 1.0 \
                    --main-class com.sws4cloud.pltools.PLToolsApplication \
                    --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
-                   --module-path "$JAVAFX_HOME/jmods:target/PL-TOOLS-1.0-SNAPSHOT.jar" \
-                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
+                   --module-path "$JAVAFX_HOME/jmods:target/PL-TOOLS-1.0-SNAPSHOT.jar:target/deps" \
+                   --add-modules com.sws4cloud.pltools \
                    --type dmg \
                    --dest release
           ls -la release
