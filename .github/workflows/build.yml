@@ -20,34 +20,56 @@ jobs:
 
       - name: Download JavaFX for Windows
         run: |
+          # 确保下载的是完整的 SDK，不是运行时
           $javafxVersion = "17.0.6"
           $url = "https://download2.gluonhq.com/openjfx/$javafxVersion/openjfx-${javafxVersion}_windows-x64_bin-sdk.zip"
+          Write-Host "Downloading JavaFX SDK from: $url"
           Invoke-WebRequest -Uri $url -OutFile "javafx-sdk.zip"
           Expand-Archive -Path "javafx-sdk.zip" -DestinationPath "javafx"
-          echo "JAVAFX_HOME=$pwd\javafx\javafx-sdk-$javafxVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+          
+          # 验证目录结构
+          $javafxDir = Get-ChildItem -Path "javafx" -Directory | Select-Object -First 1
+          if ($javafxDir) {
+            echo "JAVAFX_HOME=$pwd\$javafxDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "JAVAFX_HOME=$pwd\javafx\javafx-sdk-$javafxVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
+      - name: Verify JavaFX modules
+        run: |
+          echo "=== JavaFX Home ==="
+          echo $env:JAVAFX_HOME
+          echo "=== Full path ==="
+          (Get-Item $env:JAVAFX_HOME).FullName
+          echo "=== Listing jmods directory ==="
+          if (Test-Path "$env:JAVAFX_HOME\jmods") {
+            Get-ChildItem -Path "$env:JAVAFX_HOME\jmods" -Name *.jmod
+          } else {
+            Write-Host "ERROR: jmods directory not found!"
+            Write-Host "Contents of JAVAFX_HOME:"
+            Get-ChildItem -Path $env:JAVAFX_HOME -Recurse -Name
+          }
 
       - name: Build with Maven
         run: mvn clean package
 
-      - name: List generated files
-        run: |
-          echo "=== Files in target directory ==="
-          Get-ChildItem -Path target -Recurse -Name | Where-Object { $_ -like "*.jar" }
-
       - name: Create Windows Package
         run: |
-          # 使用包含所有依赖的JAR文件
+          # 先尝试直接运行应用程序验证类路径
+          echo "=== Testing JAR file ==="
+          java -jar target/PL-TOOLS-1.0-SNAPSHOT-with-deps.jar --version 2>&1 || echo "JAR test completed"
+          
+          echo "=== Running jpackage ==="
           jpackage --name PL-TOOLS `
                    --app-version 1.0 `
                    --input target `
                    --main-jar PL-TOOLS-1.0-SNAPSHOT-with-deps.jar `
                    --main-class com.sws4cloud.pltools.PLToolsApplication `
                    --module-path "$env:JAVAFX_HOME\jmods" `
-                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media `
+                   --add-modules javafx.controls,javafx.fxml `
                    --type exe `
                    --dest release `
-                   --win-menu `
-                   --win-shortcut
+                   --verbose
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
@@ -69,29 +91,55 @@ jobs:
       - name: Download JavaFX for macOS
         run: |
           javafxVersion="17.0.6"
+          echo "Downloading JavaFX SDK version: $javafxVersion"
           curl -L -o javafx-sdk.zip "https://download2.gluonhq.com/openjfx/$javafxVersion/openjfx-${javafxVersion}_osx-x64_bin-sdk.zip"
-          unzip javafx-sdk.zip
-          echo "JAVAFX_HOME=$(pwd)/javafx-sdk-$javafxVersion" >> $GITHUB_ENV
+          unzip -q javafx-sdk.zip
+          
+          # 查找正确的目录
+          if [ -d "javafx-sdk-$javafxVersion" ]; then
+            echo "JAVAFX_HOME=$(pwd)/javafx-sdk-$javafxVersion" >> $GITHUB_ENV
+          else
+            # 可能是不同的目录结构
+            javafxDir=$(find . -name "javafx-sdk-*" -type d | head -1)
+            if [ -n "$javafxDir" ]; then
+              echo "JAVAFX_HOME=$(pwd)/${javafxDir#./}" >> $GITHUB_ENV
+            else
+              echo "ERROR: Could not find JavaFX SDK directory"
+              ls -la
+              exit 1
+            fi
+          fi
+
+      - name: Verify JavaFX modules
+        run: |
+          echo "=== JavaFX Home ==="
+          echo $JAVAFX_HOME
+          echo "=== Listing jmods directory ==="
+          if [ -d "$JAVAFX_HOME/jmods" ]; then
+            ls -la "$JAVAFX_HOME/jmods/" | grep javafx
+          else
+            echo "ERROR: jmods directory not found!"
+            echo "Contents of JAVAFX_HOME:"
+            find "$JAVAFX_HOME" -type f -name "*.jmod" | head -20
+          fi
 
       - name: Build with Maven
         run: mvn clean package
 
-      - name: List generated files
-        run: |
-          echo "=== Files in target directory ==="
-          find target -name "*.jar" -type f
-
       - name: Create macOS Package
         run: |
+          echo "=== Running jpackage ==="
+          # 先尝试只添加基本模块
           jpackage --name PL-TOOLS \
                    --app-version 1.0 \
                    --input target \
                    --main-jar PL-TOOLS-1.0-SNAPSHOT-with-deps.jar \
                    --main-class com.sws4cloud.pltools.PLToolsApplication \
                    --module-path "$JAVAFX_HOME/jmods" \
-                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
+                   --add-modules javafx.controls,javafx.fxml \
                    --type dmg \
-                   --dest release
+                   --dest release \
+                   --verbose
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
