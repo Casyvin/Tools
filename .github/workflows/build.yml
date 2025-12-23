@@ -11,41 +11,60 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 17 with JavaFX
-        uses: actions/setup-java@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3  # 建议升级到 v3
         with:
           java-version: '17'
           distribution: 'zulu'
+
+      - name: Download JavaFX for Windows
+        run: |
+          $javafxVersion = "20"  # 请确保与您的pom.xml中的JavaFX版本一致
+          $url = "https://download2.gluonhq.com/openjfx/$javafxVersion/openjfx-${javafxVersion}_windows-x64_bin-sdk.zip"
+          Invoke-WebRequest -Uri $url -OutFile "javafx-sdk.zip"
+          Expand-Archive -Path "javafx-sdk.zip" -DestinationPath "javafx"
+          echo "JAVAFX_HOME=$pwd\javafx\javafx-sdk-$javafxVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build with Maven
         run: mvn clean package
 
       - name: Create Windows Package
         run: |
-          jpackage --input target/ \
-                   --name PL-TOOLS \
-                   --app-version 1.0 \
-                   --main-class com.sws4cloud.pltools.PLToolsApplication \
-                   --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
-                   --type exe \
-                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media
-          Get-ChildItem -Path . -Recurse -Name "*PL-TOOLS*"
+          jpackage --input target/ `
+                   --name PL-TOOLS `
+                   --app-version 1.0 `
+                   --main-class com.sws4cloud.pltools.PLToolsApplication `
+                   --main-jar PL-TOOLS-1.0-SNAPSHOT.jar `
+                   --module-path "$env:JAVAFX_HOME\jmods;target\PL-TOOLS-1.0-SNAPSHOT.jar" `
+                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media `
+                   --type exe `
+                   --dest release
+          Get-ChildItem -Path release -Recurse -Name "*.exe"
 
       - name: Upload Windows Artifact
         uses: actions/upload-artifact@v4
         with:
           name: PL-TOOLS-windows
-          path: '**/PL-TOOLS*.exe'
+          path: 'release/*.exe'
 
   build-macos:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up JDK 17 with JavaFX
-        uses: actions/setup-java@v2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3  # 建议升级到 v3
         with:
           java-version: '17'
           distribution: 'zulu'
+
+      - name: Download JavaFX for macOS
+        run: |
+          javafxVersion="20"  # 请确保与您的pom.xml中的JavaFX版本一致
+          curl -L -o javafx-sdk.zip "https://download2.gluonhq.com/openjfx/$javafxVersion/openjfx-${javafxVersion}_osx-x64_bin-sdk.zip"
+          unzip javafx-sdk.zip
+          echo "JAVAFX_HOME=$(pwd)/javafx-sdk-$javafxVersion" >> $GITHUB_ENV
 
       - name: Build with Maven
         run: mvn clean package
@@ -57,12 +76,14 @@ jobs:
                    --app-version 1.0 \
                    --main-class com.sws4cloud.pltools.PLToolsApplication \
                    --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
+                   --module-path "$JAVAFX_HOME/jmods:target/PL-TOOLS-1.0-SNAPSHOT.jar" \
+                   --add-modules javafx.controls,javafx.fxml \
                    --type dmg \
-                   --add-modules javafx.controls,javafx.fxml
-          ls -la
+                   --dest release
+          ls -la release
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
         with:
           name: PL-TOOLS-macos
-          path: '**/PL-TOOLS*.dmg'
+          path: 'release/*.dmg'
