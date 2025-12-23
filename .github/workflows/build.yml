@@ -27,36 +27,23 @@ jobs:
           echo "JAVAFX_HOME=$pwd\javafx\javafx-sdk-$javafxVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Build with Maven
-        run: |
-          mvn clean compile
-          mvn package
+        run: mvn clean package
 
-      - name: Debug - List generated files
+      - name: List generated files
         run: |
-          echo "=== Listing target directory ==="
-          Get-ChildItem -Path target -Recurse -Name
-          echo "=== Listing modules directory ==="
-          if (Test-Path target/modules) {
-            Get-ChildItem -Path target/modules -Name
-          }
+          echo "=== Files in target directory ==="
+          Get-ChildItem -Path target -Recurse -Name | Where-Object { $_ -like "*.jar" }
 
       - name: Create Windows Package
         run: |
-          # 检查主JAR是否包含模块信息
-          echo "=== Checking module info ==="
-          jar --file=target/PL-TOOLS-1.0-SNAPSHOT.jar --describe-module
-          
-          # 构建模块路径
-          $modulePath = "$env:JAVAFX_HOME\jmods;target\PL-TOOLS-1.0-SNAPSHOT.jar"
-          if (Test-Path target/modules) {
-            $modulePath = "$modulePath;target\modules\*.jar"
-          }
-          echo "Module path: $modulePath"
-          
+          # 使用包含所有依赖的JAR文件
           jpackage --name PL-TOOLS `
                    --app-version 1.0 `
-                   --module-path $modulePath `
-                   --module com.sws4cloud.pltools/com.sws4cloud.pltools.PLToolsApplication `
+                   --input target `
+                   --main-jar PL-TOOLS-1.0-SNAPSHOT-with-deps.jar `
+                   --main-class com.sws4cloud.pltools.PLToolsApplication `
+                   --module-path "$env:JAVAFX_HOME\jmods" `
+                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media `
                    --type exe `
                    --dest release `
                    --win-menu `
@@ -87,36 +74,22 @@ jobs:
           echo "JAVAFX_HOME=$(pwd)/javafx-sdk-$javafxVersion" >> $GITHUB_ENV
 
       - name: Build with Maven
-        run: |
-          mvn clean compile
-          mvn package
+        run: mvn clean package
 
-      - name: Debug - List generated files
+      - name: List generated files
         run: |
-          echo "=== Listing target directory ==="
-          find target -type f -name "*.jar" | head -20
-          echo "=== Listing modules directory ==="
-          if [ -d "target/modules" ]; then
-            ls -la target/modules/
-          fi
+          echo "=== Files in target directory ==="
+          find target -name "*.jar" -type f
 
       - name: Create macOS Package
         run: |
-          # 检查主JAR是否包含模块信息
-          echo "=== Checking module info ==="
-          jar --file=target/PL-TOOLS-1.0-SNAPSHOT.jar --describe-module
-          
-          # 构建模块路径
-          modulePath="$JAVAFX_HOME/jmods:target/PL-TOOLS-1.0-SNAPSHOT.jar"
-          if [ -d "target/modules" ]; then
-            modulePath="$modulePath:target/modules/*"
-          fi
-          echo "Module path: $modulePath"
-          
           jpackage --name PL-TOOLS \
                    --app-version 1.0 \
-                   --module-path "$modulePath" \
-                   --module com.sws4cloud.pltools/com.sws4cloud.pltools.PLToolsApplication \
+                   --input target \
+                   --main-jar PL-TOOLS-1.0-SNAPSHOT-with-deps.jar \
+                   --main-class com.sws4cloud.pltools.PLToolsApplication \
+                   --module-path "$JAVAFX_HOME/jmods" \
+                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
                    --type dmg \
                    --dest release
 
