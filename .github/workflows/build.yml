@@ -23,13 +23,7 @@ jobs:
 
       - name: Create Windows Package
         run: |
-          jpackage --input target/ \
-                   --name PL-TOOLS \
-                   --app-version 1.0 \
-                   --main-class com.sws4cloud.pltools.PLToolsApplication \
-                   --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
-                   --type exe \
-                   --java-options "--add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media"
+          jpackage --input target/ --name PL-TOOLS --app-version 1.0 --main-class com.sws4cloud.pltools.PLToolsApplication --main-jar PL-TOOLS-1.0-SNAPSHOT.jar --type exe --java-options "--add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media"
           Get-ChildItem -Path . -Recurse -Name "*PL-TOOLS*"
 
       - name: Upload Windows Artifact
@@ -55,12 +49,12 @@ jobs:
       - name: Create macOS Package
         run: |
           jpackage --input target/ \
-                   --name PL-TOOLS \
-                   --app-version 1.0 \
-                   --main-class com.sws4cloud.pltools.PLToolsApplication \
-                   --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
-                   --type dmg \
-                   --java-options "--add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media"
+                  --name PL-TOOLS \
+                  --app-version 1.0 \
+                  --main-class com.sws4cloud.pltools.PLToolsApplication \
+                  --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
+                  --type dmg \
+                  --java-options "--add-modules ALL-SYSTEM"
           ls -la  # 检查生成的文件
 
       - name: Upload macOS Artifact
