@@ -25,7 +25,7 @@ jobs:
           jpackage --input target/ --name PL-TOOLS --app-version 1.0 --main-class com.sws4cloud.pltools.PLToolsApplication --main-jar PL-TOOLS-1.0-SNAPSHOT.jar --type exe
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4  # 更新为 v4 版本
         with:
           name: PL-TOOLS-windows
           path: PL-TOOLS.exe
