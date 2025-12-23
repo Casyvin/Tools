@@ -58,8 +58,8 @@ jobs:
                    --main-class com.sws4cloud.pltools.PLToolsApplication \
                    --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
                    --type dmg \
-                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media
-          ls -la  # 检查生成的文件
+                   --add-modules javafx.controls,javafx.fxml
+          ls -la
 
       - name: Upload macOS Artifact
         uses: actions/upload-artifact@v4
