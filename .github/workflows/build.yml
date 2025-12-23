@@ -13,14 +13,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3  # 建议升级到 v3
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'zulu'
 
       - name: Download JavaFX for Windows
         run: |
-          $javafxVersion = "20"  # 请确保与您的pom.xml中的JavaFX版本一致
+          $javafxVersion = "17.0.6"
           $url = "https://download2.gluonhq.com/openjfx/$javafxVersion/openjfx-${javafxVersion}_windows-x64_bin-sdk.zip"
           Invoke-WebRequest -Uri $url -OutFile "javafx-sdk.zip"
           Expand-Archive -Path "javafx-sdk.zip" -DestinationPath "javafx"
@@ -54,14 +54,14 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3  # 建议升级到 v3
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'zulu'
 
       - name: Download JavaFX for macOS
         run: |
-          javafxVersion="20"  # 请确保与您的pom.xml中的JavaFX版本一致
+          javafxVersion="17.0.6"
           curl -L -o javafx-sdk.zip "https://download2.gluonhq.com/openjfx/$javafxVersion/openjfx-${javafxVersion}_osx-x64_bin-sdk.zip"
           unzip javafx-sdk.zip
           echo "JAVAFX_HOME=$(pwd)/javafx-sdk-$javafxVersion" >> $GITHUB_ENV
@@ -77,7 +77,7 @@ jobs:
                    --main-class com.sws4cloud.pltools.PLToolsApplication \
                    --main-jar PL-TOOLS-1.0-SNAPSHOT.jar \
                    --module-path "$JAVAFX_HOME/jmods:target/PL-TOOLS-1.0-SNAPSHOT.jar" \
-                   --add-modules javafx.controls,javafx.fxml \
+                   --add-modules javafx.controls,javafx.fxml,javafx.web,javafx.swing,javafx.media \
                    --type dmg \
                    --dest release
           ls -la release
